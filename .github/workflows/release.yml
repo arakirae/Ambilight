@@ -12,6 +12,11 @@ on:
 permissions:
   contents: write
 
+# A tag pushed and a release published from the website start two runs: they wait for each other
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
