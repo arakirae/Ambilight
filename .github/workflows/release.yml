@@ -1,11 +1,13 @@
-# Builds Ambilight.zip (just what's needed to install) and publishes a GitHub release
-# every time a version tag like v1.3.0 is pushed.
+# Builds Ambilight.zip (just what's needed to install) and attaches it to a GitHub release
+# every time a version tag like v1.1.0 is pushed or a release is published from the website.
 
 name: Release
 
 on:
   push:
     tags: ["v*"]
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -26,7 +28,14 @@ jobs:
           awk -v v="$version" '/^## /{ p = (index($0, "## " v " ") == 1 || $0 == "## " v); next } p' CHANGELOG.md > notes.md
           printf '\n**How to install:** download Ambilight.zip below, extract it and double-click Install.bat. Full guide: https://github.com/%s#installation\n' "$GITHUB_REPOSITORY" >> notes.md
 
-      - name: Create the release
+      # Creates the release, or fills in the one already made from the website
+      - name: Create or update the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" Ambilight.zip --title "Ambilight ${GITHUB_REF_NAME#v}" --notes-file notes.md
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" Ambilight.zip --clobber
+            gh release edit "$GITHUB_REF_NAME" --title "Ambilight ${GITHUB_REF_NAME#v}" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" Ambilight.zip --title "Ambilight ${GITHUB_REF_NAME#v}" --notes-file notes.md
+          fi
