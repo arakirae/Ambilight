@@ -23,9 +23,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The tag, the version in index.ts and the lists of files have to agree,
+      # or the copies of the plugin that are already installed can't update themselves
+      - name: Check the version and the file lists
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          grep -q "const VERSION = \"$version\";" index.ts || { echo "::error::index.ts doesn't say version $version"; exit 1; }
+          for file in $(jq -r '.files[]' update.json); do
+            test -f "$file" || { echo "::error::update.json lists $file, which isn't in the repository"; exit 1; }
+            grep -q "'$file'" install.ps1 || { echo "::error::install.ps1 doesn't install $file"; exit 1; }
+          done
+          for file in *.ts *.tsx *.css; do
+            test -f "$file" || continue
+            jq -e --arg f "$file" '.files | index($f) != null' update.json > /dev/null || { echo "::error::$file isn't listed in update.json"; exit 1; }
+          done
+
       # Files at the top of the ZIP, so Windows' "Extract All" gives a single Ambilight folder
       - name: Build Ambilight.zip
-        run: zip Ambilight.zip Install.bat install.ps1 index.ts ambilight.ts native.ts LICENSE
+        run: zip Ambilight.zip Install.bat install.ps1 $(jq -r '.files[]' update.json) LICENSE
 
       - name: Release notes from CHANGELOG.md
         run: |

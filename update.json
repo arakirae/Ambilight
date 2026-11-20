@@ -1,0 +1,4 @@
+{
+    "files": ["index.ts", "ambilight.ts", "native.ts"],
+    "remove": []
+}

@@ -29,6 +29,7 @@ Follow the window, then fully close Discord, open it again and turn on **Ambilig
 - **Streams keep playing behind the Start menu.** Normally, when something covers Discord's window, Windows treats it as hidden and Discord stops drawing the stream. Ambilight keeps it playing. A minimized Discord still pauses as usual, to save resources.
 - **Leaves grids alone.** In the grid with several people, nothing changes.
 - **Light on your PC.** The glow is computed from a tiny 160 px copy of the video, 30 times a second by default, and only while there are bars to fill.
+- **Updates by itself.** When a new version comes out, Ambilight installs it and asks you to restart Discord. You can turn this off in the settings.
 
 ## What it doesn't do
 
@@ -93,6 +94,7 @@ Vencord's own guide: [installing custom plugins](https://docs.vencord.dev/instal
 | Streams and cameras | On | Adds the glow to Go Live streams and cameras in voice calls |
 | Videos in chat | Off | Also adds the glow to videos in messages: inside the video's own frame, and around it when you watch it in fullscreen |
 | Side-by-side streams | On | When you watch several streams next to each other, each one lights its own part of the screen. When off, there is no glow in this layout |
+| Automatic updates | On | Looks for a new version on GitHub and installs it by itself, then asks you to restart Discord |
 | Advanced settings | Off | Shows the fine-tuning options below |
 
 Advanced settings:
@@ -112,7 +114,13 @@ Changes apply right away, while you watch.
 
 ## Updating
 
-Paste the install command again, or download [Ambilight.zip](https://github.com/arakirae/Ambilight/releases/latest/download/Ambilight.zip) again and run **Install.bat**. Your settings are kept.
+From version 1.1.0, Ambilight updates by itself. About a minute after Discord starts, and every 6 hours after that, it looks at this repository. If there is a new version, it downloads it into its own folder, has Vencord rebuild itself and shows a notification: click it to restart Discord, or just carry on, and the new version starts the next time Discord does.
+
+- If a new version can't be built on your PC, Ambilight puts the previous one back and tries once more later. If that fails too, a notification tells you and that version is left alone.
+- To turn it off, disable **Automatic updates** in the plugin's settings. Ambilight then never connects to the internet.
+- **Version 1.0.0 can't update itself.** Update it once by hand, as below.
+
+To update by hand, paste the install command again, or download [Ambilight.zip](https://github.com/arakirae/Ambilight/releases/latest/download/Ambilight.zip) again and run **Install.bat**. Your settings are kept.
 
 ## Uninstalling
 
@@ -122,7 +130,10 @@ Paste the install command again, or download [Ambilight.zip](https://github.com/
 ## FAQ
 
 **Does Ambilight connect to the internet?**
-No. Everything happens on your PC, from the video Discord is already showing you. Only the installer downloads files: Vencord and this plugin from GitHub.
+Only to look for its own updates: it reads this repository on GitHub, and sends nothing about you or what you watch. With **Automatic updates** off, it never connects. The glow itself is made on your PC, from the video Discord is already showing you.
+
+**What do automatic updates install?**
+Only the plugin's own files (the list is in [update.json](update.json)), taken from this repository and put in the plugin's folder. They download nothing else and write nowhere else.
 
 **Do the people streaming see the glow?**
 No, it's only on your screen. They don't need the plugin, and nothing changes for them.

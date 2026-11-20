@@ -2,6 +2,9 @@
 
 ## 1.1.0 (2026-11-20)
 
+- Automatic updates: Ambilight looks for a new version when Discord starts and every 6 hours, installs it by itself, has Vencord rebuild itself and shows a notification to restart Discord. If a version can't be built, the previous one is put back
+- New setting: **Automatic updates** (on by default). When it's off, Ambilight never connects to the internet
+- Version 1.0.0 can't update itself: update it once with the install command or Install.bat
 - Fixed the glow covering the server list and the DM list when **Videos in chat** was on and Discord showed a quest promo in the sidebar
 - **Videos in chat** now only looks at videos in messages, and only lights the bars inside the video's own frame, or the screen around it in fullscreen. Quest promos, shop previews and other decorative videos are left alone
 - Fixed the title or the avatars of a call ending up hidden under the glow after Discord redrew them

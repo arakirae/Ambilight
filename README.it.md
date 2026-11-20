@@ -29,6 +29,7 @@ Segui la finestra, poi chiudi Discord del tutto, riaprilo e attiva **Ambilight**
 - **Le live continuano dietro al menu Start.** Di solito, quando qualcosa copre la finestra di Discord, Windows la considera nascosta e Discord smette di disegnare la live. Ambilight la fa continuare. Se Discord è minimizzato, la live va in pausa come sempre, per risparmiare risorse.
 - **Non tocca le griglie.** Nella vista a griglia con più persone non cambia niente.
 - **Leggero.** Il bagliore si calcola da una copia del video di appena 160 px, 30 volte al secondo di base, e solo quando ci sono bande da riempire.
+- **Si aggiorna da solo.** Quando esce una nuova versione, Ambilight la installa e ti chiede di riavviare Discord. Si può disattivare dalle impostazioni.
 
 ## Cosa non fa
 
@@ -95,6 +96,7 @@ Le impostazioni del plugin sono in inglese.
 | Streams and cameras | Attivo | Aggiunge il bagliore alle live e alle webcam nelle chiamate vocali |
 | Videos in chat | Spento | Aggiunge il bagliore anche ai video nei messaggi: dentro il riquadro del video, e attorno al video quando lo guardi a schermo intero |
 | Side-by-side streams | Attivo | Quando guardi più live una accanto all'altra, ognuna colora la sua parte di schermo. Se spento, in questa situazione non c'è bagliore |
+| Automatic updates | Attivo | Cerca una nuova versione su GitHub e la installa da solo, poi ti chiede di riavviare Discord |
 | Advanced settings | Spento | Mostra le regolazioni fini qui sotto |
 
 Impostazioni avanzate:
@@ -114,7 +116,13 @@ Le modifiche si applicano subito, mentre guardi.
 
 ## Aggiornare
 
-Incolla di nuovo il comando di installazione, oppure scarica di nuovo [Ambilight.zip](https://github.com/arakirae/Ambilight/releases/latest/download/Ambilight.zip) ed esegui **Install.bat**. Le impostazioni restano.
+Dalla versione 1.1.0 Ambilight si aggiorna da solo. Circa un minuto dopo l'avvio di Discord, e poi ogni 6 ore, controlla questo repository. Se c'è una versione nuova la scarica nella sua cartella, fa ricompilare Vencord e mostra una notifica: cliccala per riavviare Discord, oppure continua pure, e la nuova versione parte al prossimo avvio di Discord.
+
+- Se una nuova versione non si riesce a compilare sul tuo PC, Ambilight rimette quella di prima e riprova una volta più tardi. Se fallisce ancora ti avvisa con una notifica e lascia stare quella versione.
+- Per disattivarlo, spegni **Automatic updates** nelle impostazioni del plugin. A quel punto Ambilight non si collega mai a internet.
+- **La versione 1.0.0 non sa aggiornarsi da sola.** Aggiornala una volta a mano, come qui sotto.
+
+Per aggiornare a mano, incolla di nuovo il comando di installazione, oppure scarica di nuovo [Ambilight.zip](https://github.com/arakirae/Ambilight/releases/latest/download/Ambilight.zip) ed esegui **Install.bat**. Le impostazioni restano.
 
 ## Disinstallare
 
@@ -124,7 +132,10 @@ Incolla di nuovo il comando di installazione, oppure scarica di nuovo [Ambilight
 ## Domande frequenti
 
 **Ambilight si collega a internet?**
-No. Fa tutto sul tuo PC, a partire dal video che Discord ti sta già mostrando. Solo l'installer scarica file: Vencord e questo plugin da GitHub.
+Solo per cercare i propri aggiornamenti: legge questo repository su GitHub, e non invia niente su di te o su quello che guardi. Con **Automatic updates** spento non si collega mai. Il bagliore si calcola sul tuo PC, a partire dal video che Discord ti sta già mostrando.
+
+**Cosa installano gli aggiornamenti automatici?**
+Solo i file del plugin (l'elenco è in [update.json](update.json)), presi da questo repository e messi nella cartella del plugin. Non scaricano altro e non scrivono da nessun'altra parte.
 
 **Chi trasmette vede il bagliore?**
 No, è solo sul tuo schermo. Gli altri non hanno bisogno del plugin e per loro non cambia niente.
