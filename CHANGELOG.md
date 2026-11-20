@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 (2026-11-20)
+
+- Fixed the glow covering the server list and the DM list when **Videos in chat** was on and Discord showed a quest promo in the sidebar
+- **Videos in chat** now only looks at videos in messages, and only lights the bars inside the video's own frame, or the screen around it in fullscreen. Quest promos, shop previews and other decorative videos are left alone
+- Fixed the title or the avatars of a call ending up hidden under the glow after Discord redrew them
+- A small stream inside a large dark area no longer lights up the whole area
+
 ## 1.0.0 (2026-11-11)
 
 First public release.

@@ -34,6 +34,7 @@ Follow the window, then fully close Discord, open it again and turn on **Ambilig
 
 - **Pop-out stream windows.** Streams opened in a separate window stay as they are.
 - **Grids with several tiles.** If the grid mixes streams and people, the bars stay black.
+- **Other videos around Discord.** Quest promos, shop previews, nameplates and other decorations are never touched, even with **Videos in chat** on.
 - **Change the stream itself.** It only paints the empty space around the video: what you see inside the video, and what others see, doesn't change.
 
 ## Before you start
@@ -90,7 +91,7 @@ Vencord's own guide: [installing custom plugins](https://docs.vencord.dev/instal
 | Setting | Default | What it does |
 |---|---|---|
 | Streams and cameras | On | Adds the glow to Go Live streams and cameras in voice calls |
-| Videos in chat | Off | Also adds the glow to videos attached or embedded in messages |
+| Videos in chat | Off | Also adds the glow to videos in messages: inside the video's own frame, and around it when you watch it in fullscreen |
 | Side-by-side streams | On | When you watch several streams next to each other, each one lights its own part of the screen. When off, there is no glow in this layout |
 | Advanced settings | Off | Shows the fine-tuning options below |
 

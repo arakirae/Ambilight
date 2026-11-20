@@ -34,6 +34,7 @@ Segui la finestra, poi chiudi Discord del tutto, riaprilo e attiva **Ambilight**
 
 - **Finestre separate delle live.** Le live aperte in una finestra a parte restano come sono.
 - **Griglie con più riquadri.** Se la griglia mescola live e persone, le bande restano nere.
+- **Altri video in giro per Discord.** Promo delle missioni, anteprime del negozio, targhette e altre decorazioni non vengono mai toccati, anche con **Videos in chat** attivo.
 - **Modificare la live.** Colora solo lo spazio vuoto attorno al video: quello che vedi dentro al video, e quello che vedono gli altri, non cambia.
 
 ## Prima di iniziare
@@ -92,7 +93,7 @@ Le impostazioni del plugin sono in inglese.
 | Impostazione | Predefinito | Cosa fa |
 |---|---|---|
 | Streams and cameras | Attivo | Aggiunge il bagliore alle live e alle webcam nelle chiamate vocali |
-| Videos in chat | Spento | Aggiunge il bagliore anche ai video allegati o incorporati nei messaggi |
+| Videos in chat | Spento | Aggiunge il bagliore anche ai video nei messaggi: dentro il riquadro del video, e attorno al video quando lo guardi a schermo intero |
 | Side-by-side streams | Attivo | Quando guardi più live una accanto all'altra, ognuna colora la sua parte di schermo. Se spento, in questa situazione non c'è bagliore |
 | Advanced settings | Spento | Mostra le regolazioni fini qui sotto |
 

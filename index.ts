@@ -21,7 +21,7 @@ const settings = definePluginSettings({
     chatVideos: {
         type: OptionType.BOOLEAN,
         displayName: "Videos in chat",
-        description: "Also adds the glow to videos attached or embedded in messages.",
+        description: "Also adds the glow to videos in messages: inside the video's own frame, and around it when you watch it in fullscreen.",
         default: false
     },
     multiLive: {

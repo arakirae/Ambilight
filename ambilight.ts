@@ -8,7 +8,7 @@
 export interface AmbilightOptions {
     /** streams and cameras in calls (videos whose srcObject is a MediaStream) */
     callVideos: boolean;
-    /** regular videos in messages (attachments, embeds) */
+    /** regular videos in messages (attachments, embeds): own frame or fullscreen only */
     chatVideos: boolean;
     /** side-by-side streams: each one lights its own part (false = no glow) */
     multiLive: boolean;
@@ -48,6 +48,27 @@ const MULTI_DIM = 0.85; // with several streams the glow is a bit softer
 const FREEZE_EVERY = 250; // ms between copies of the last frame
 const FREEZE_MAX_W = 1920; // px: max width of the copy
 const FREEZE_KEEP = 5000; // ms: how long a stalled stream keeps showing its last frame
+const MIN_COVERAGE = 0.12; // the video must fill at least this share of the area it lights up
+const FRAME_MIN_BAR = 8; // px: a regular video with thinner bars than this is left alone
+/** where Discord renders messages: the only place the "videos in chat" option looks at */
+const CHAT_SELECTOR = '[id^="message-accessories-"], [id^="chat-messages-"], [data-list-id="chat-messages"]';
+
+/** a stream or a camera in a call, as opposed to a regular video file */
+function isStream(video: HTMLVideoElement) {
+    return typeof MediaStream !== "undefined" && video.srcObject instanceof MediaStream;
+}
+
+/** the element shown in fullscreen, when it holds this video (and isn't the video itself) */
+function fullscreenBox(video: HTMLVideoElement): HTMLElement | null {
+    const fs = document.fullscreenElement;
+    return fs instanceof HTMLElement && fs !== video && fs.contains(video) ? fs : null;
+}
+
+/** how much of `area` the video fills, from 0 to 1 */
+function coverage(content: Rect, area: Rect) {
+    const total = area.width * area.height;
+    return total > 0 ? (content.width * content.height) / total : 0;
+}
 
 function contentRect(video: HTMLVideoElement, box: DOMRect, fit: string): Rect {
     const vw = video.videoWidth, vh = video.videoHeight;
@@ -82,6 +103,16 @@ function mainVideos(el: Element, content: Rect) {
     return list;
 }
 
+/** the widest bar, in px, between an area and the video inside it */
+function widestBar(outer: Rect, inner: Rect) {
+    return Math.max(
+        inner.left - outer.left,
+        inner.top - outer.top,
+        (outer.left + outer.width) - (inner.left + inner.width),
+        (outer.top + outer.height) - (inner.top + inner.height)
+    );
+}
+
 function parseColor(c: string) {
     const m = c.match(/[\d.]+/g);
     if (!m || m.length < 3) return null;
@@ -111,12 +142,43 @@ interface Found {
 }
 
 /**
+ * Regular (non-stream) videos never light up what is around them: only the bars inside
+ * their own frame or, in fullscreen, the screen around them. Discord is full of other
+ * videos (quest promos, shop previews, nameplates) sitting inside large dark containers,
+ * and those containers are not black bars.
+ */
+function findFrameTarget(video: HTMLVideoElement): Found | null {
+    // a video that is itself the fullscreen element leaves no room to draw around it
+    if (document.fullscreenElement === video) return null;
+
+    const box = video.getBoundingClientRect();
+    if (box.width < MIN_SIZE || box.height < MIN_SIZE / 2) return null;
+
+    const content = contentRect(video, box, getComputedStyle(video).objectFit);
+    const fs = fullscreenBox(video);
+    if (fs) {
+        // the fullscreen element must really be about this video, not the whole app
+        const r = fs.getBoundingClientRect();
+        if (widestBar(r, content) >= FRAME_MIN_BAR && coverage(content, r) >= MIN_COVERAGE)
+            return { target: fs, host: fs, topRef: null, group: false };
+    }
+    // a frame that is a pixel or two off the video's shape isn't worth touching
+    if (widestBar(box, content) >= FRAME_MIN_BAR && video.parentElement)
+        return { target: video, host: video.parentElement, topRef: null, group: false };
+    return null;
+}
+
+function findTarget(video: HTMLVideoElement, multiLive: boolean): Found | null {
+    return isStream(video) ? findStreamTarget(video, multiLive) : findFrameTarget(video);
+}
+
+/**
  * Finds the black area to light up: the outermost container still inside the
  * stream's backdrop (including the bands above/below with the title and avatars),
  * stopping before Discord's UI (channel list, chat) and before grids.
  * With multiLive, other side-by-side streams don't stop the search: the area is split.
  */
-function findTarget(video: HTMLVideoElement, multiLive: boolean): Found | null {
+function findStreamTarget(video: HTMLVideoElement, multiLive: boolean): Found | null {
     const box = video.getBoundingClientRect();
     if (box.width < MIN_SIZE || box.height < MIN_SIZE / 2) return null;
 
@@ -154,6 +216,9 @@ function findTarget(video: HTMLVideoElement, multiLive: boolean): Found | null {
         const bars = hasBars(r, content);
         if (bars && isChromeBackground(el)) break;
         if (bars) {
+            // a small video inside a big dark area isn't letterboxed: that area is something else
+            // (side-by-side streams share the area, so each one counts for its own part)
+            if (coverage(content, r) * Math.max(1, mains.length) < MIN_COVERAGE) break;
             best = el;
             if (isOpaqueBlack(el)) blackRect = r;
         }
@@ -281,6 +346,8 @@ class Instance {
     private hasFreeze = false;
     private lastFreezeAt = 0;
     private notReadySince = 0;
+    private lifted = new Map<HTMLElement, Restore[]>();
+    private hostObserver: MutationObserver;
 
     constructor(readonly video: HTMLVideoElement, found: Found) {
         this.ctx = this.canvas.getContext("2d", { alpha: false })!;
@@ -297,11 +364,10 @@ class Instance {
         const hostStyle = getComputedStyle(this.host);
         if (hostStyle.position === "static") setStyle(this.host, "position", "relative", this.restore);
 
-        // everything in the host (video, title, avatars) must stay above the wrapper:
-        // non-positioned children would be painted below it, so they get position: relative
-        for (const c of this.host.children)
-            if (c instanceof HTMLElement && !c.hasAttribute(ATTR) && getComputedStyle(c).position === "static")
-                setStyle(c, "position", "relative", this.restore);
+        this.liftChildren();
+        // Discord re-creates its elements when it re-renders: lift the new ones right away
+        this.hostObserver = new MutationObserver(this.liftChildren);
+        this.hostObserver.observe(this.host, { childList: true });
 
         // everything between the host and the video (video included) becomes transparent,
         // so the glow, not black, shows under the faded edges of the video
@@ -338,6 +404,26 @@ class Instance {
         this.wrapper.append(this.canvas, this.overlay, this.freeze);
         this.host.prepend(this.wrapper);
     }
+
+    /**
+     * Everything in the host (video, title, avatars) must stay above the wrapper:
+     * non-positioned children would be painted below it, so they get position: relative.
+     * Runs again whenever the host's children change, and on every scan.
+     */
+    liftChildren = () => {
+        for (const [el, undo] of this.lifted) {
+            if (el.parentElement === this.host) continue;
+            for (const r of undo) r();
+            this.lifted.delete(el);
+        }
+        for (const c of this.host.children) {
+            if (!(c instanceof HTMLElement) || c.hasAttribute(ATTR)) continue;
+            if (getComputedStyle(c).position !== "static") continue;
+            let undo = this.lifted.get(c);
+            if (!undo) this.lifted.set(c, undo = []);
+            setStyle(c, "position", "relative", undo.length ? [] : undo);
+        }
+    };
 
     get alive() {
         return this.video.isConnected && this.wrapper.isConnected && this.target.isConnected
@@ -560,7 +646,10 @@ class Instance {
     }
 
     destroy() {
+        this.hostObserver.disconnect();
         this.wrapper.remove();
+        for (const undo of this.lifted.values()) for (const r of undo) r();
+        this.lifted.clear();
         for (const r of this.restore.reverse()) r();
         this.restore = [];
     }
@@ -593,22 +682,31 @@ export class AmbilightController {
         });
         this.observer.observe(document.body, { childList: true, subtree: true });
         document.querySelectorAll("video").forEach(v => this.videos.add(v));
+        document.addEventListener("fullscreenchange", this.rescan);
         this.raf = requestAnimationFrame(this.loop);
     }
 
     stop() {
         this.observer?.disconnect();
         this.observer = null;
+        document.removeEventListener("fullscreenchange", this.rescan);
         cancelAnimationFrame(this.raf);
         for (const inst of this.instances.values()) inst.destroy();
         this.instances.clear();
         this.videos.clear();
     }
 
+    /** entering or leaving fullscreen changes what a video can light up: look again right away */
+    private rescan = () => {
+        this.lastScan = 0;
+    };
+
     private eligible(v: HTMLVideoElement, o: AmbilightOptions) {
         if (v.closest(`[${ATTR}]`)) return false;
-        const isStream = typeof MediaStream !== "undefined" && v.srcObject instanceof MediaStream;
-        return isStream ? o.callVideos : o.chatVideos && !!(v.currentSrc || v.src);
+        if (isStream(v)) return o.callVideos;
+        // regular videos: only the ones in messages, or the one being watched in fullscreen.
+        // Promos, shop previews and decorations elsewhere in Discord are never touched.
+        return o.chatVideos && !!(v.currentSrc || v.src) && (!!v.closest(CHAT_SELECTOR) || !!fullscreenBox(v));
     }
 
     private scan(o: AmbilightOptions) {
@@ -633,6 +731,7 @@ export class AmbilightController {
             }
             if (found && !this.instances.has(v)) this.instances.set(v, new Instance(v, found));
         }
+        for (const inst of this.instances.values()) inst.liftChildren();
         this.orderGroups();
     }
 
